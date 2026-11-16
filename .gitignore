@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+backups/
+*.db-journal
+.env
+
+# data/ is committed so the deployed demo shows the same content as local.
+!data/
+!data/outreach.db
