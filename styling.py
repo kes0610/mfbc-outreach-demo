@@ -116,6 +116,12 @@ h2, h3 {
     background-color: #7E1427;
     border-color: #7E1427;
 }
+.stButton > button:disabled, .stButton > button[kind="primary"]:disabled,
+.stButton > button:disabled:hover, .stButton > button[kind="primary"]:disabled:hover {
+    background-color: #EDEAE2;
+    border-color: #D8D3C6;
+    color: #6B6B6B;
+}
 
 /* Top navigation (st.navigation position="top") */
 [data-testid="stHeader"] {
