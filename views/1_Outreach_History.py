@@ -100,6 +100,10 @@ PIPELINE_VIEW_COLUMNS = [
 STAGE_LABEL_OPTIONS = [db.STAGE_LABELS[s] for s in db.STAGES]
 STAGE_LABEL_TO_KEY = {v: k for k, v in db.STAGE_LABELS.items()}
 
+# Business-meaningful order for the "All brands" grid — not alphabetical.
+# Same order used for Brand History's "Sort by: Stage"; keep both in sync.
+STAGE_SORT_ORDER = ["in_communication", "new", "attending", "archived", "future_participation"]
+
 
 def _brand_table(stage_df, key_prefix):
     """Read-only, at-a-glance grid for a stage. Auto-sized to its row count
@@ -281,7 +285,11 @@ with tab_all:
         if df.empty:
             st.info("Nothing logged yet.")
         else:
-            _brand_table(df, "all")
+            all_df = df.sort_values(
+                "stage", na_position="last",
+                key=lambda s: s.map(lambda v: STAGE_SORT_ORDER.index(v) if v in STAGE_SORT_ORDER else len(STAGE_SORT_ORDER)),
+            )
+            _brand_table(all_df, "all")
 
 with tab_new:
     new_df = df[df["stage"] == "new"].copy()

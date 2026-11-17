@@ -26,10 +26,9 @@ SORT_OPTIONS = {
     "Outcome": ("outcome", True),
 }
 
-# Business-meaningful order for "Sort by: Stage" — not alphabetical. In
-# communication and Attending lead since those are the most active/relevant
-# brands to check first; anything outside this list sorts after.
-STAGE_SORT_ORDER = ["in_communication", "attending", "future_participation", "new", "archived"]
+# Business-meaningful order for "Sort by: Stage" — not alphabetical. Same
+# order used for the "All brands" grid on Outreach List; keep both in sync.
+STAGE_SORT_ORDER = ["in_communication", "new", "attending", "archived", "future_participation"]
 
 
 def _to_date(value):
