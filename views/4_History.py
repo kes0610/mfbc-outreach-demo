@@ -236,13 +236,13 @@ else:
             if st.button(item.company or "(no company name)", key=f"brand_specifics_{item.id}"):
                 st.session_state["history_selected_id"] = int(item.id)
                 _brand_dialog(df[df["id"] == item.id].iloc[0])
-            bits = [db.STAGE_LABELS.get(item.stage, item.stage)]
-            if item.sender:
+            bits = [str(db.STAGE_LABELS.get(item.stage, item.stage))]
+            if pd.notna(item.sender) and item.sender:
                 bits.append(f"Sender: {item.sender}")
-            if item.date_sent:
+            if pd.notna(item.date_sent) and item.date_sent:
                 bits.append(f"Sent {item.date_sent}")
-            if item.outcome:
-                bits.append(db.OUTCOME_LABELS.get(item.outcome, item.outcome))
+            if pd.notna(item.outcome) and item.outcome:
+                bits.append(str(db.OUTCOME_LABELS.get(item.outcome, item.outcome)))
             st.caption(" · ".join(bits))
             st.divider()
 
