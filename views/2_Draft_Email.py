@@ -99,84 +99,87 @@ if brand_info:
             "and public profile to give a grounded estimate, instead of guessing from "
             "connection checkboxes."
         )
+elif source_mode == "Enter a brand not logged yet":
+    st.caption("Fill in a company name above to enable drafting below.")
 
-    st.subheader("2. Draft it")
-    draft_mode = st.radio(
-        "Drafting mode",
-        ["Free template (no cost)", "AI-generated (Claude API — costs a small amount)"],
-        horizontal=True,
-    )
+st.subheader("2. Draft it")
+draft_mode = st.radio(
+    "Drafting mode",
+    ["Free template (no cost)", "AI-generated (Claude API — costs a small amount)"],
+    horizontal=True,
+)
 
-    edited_draft = None
-    relied_on = None
-    result = None
+edited_draft = None
+relied_on = None
+result = None
 
-    if draft_mode == "Free template (no cost)":
-        templates = db.fetch_templates()
-        if templates.empty:
-            st.warning("No templates yet — add one on the Templates page.")
-        else:
-            t_options = {row.name: row for row in templates.itertuples()}
-            t_choice = st.selectbox("Template", list(t_options.keys()))
-            template_row = t_options[t_choice]
-            st.caption(
-                "No API call, nothing spent. Edit the [Templates](/Templates) page to "
-                "change the wording, then click below to (re)fill it with this brand's info."
-            )
-            if st.button("Fill in template"):
-                rendered = db.render_template(template_row.body, brand_info)
-                st.session_state["free_draft_text"] = rendered
-                st.session_state["free_draft_version"] = st.session_state.get("free_draft_version", 0) + 1
-
-            if "free_draft_text" in st.session_state:
-                edited_draft = st.text_area(
-                    "Draft email", value=st.session_state["free_draft_text"], height=280,
-                    key=f"free_draft_box_{st.session_state.get('free_draft_version', 0)}",
-                )
+if draft_mode == "Free template (no cost)":
+    templates = db.fetch_templates()
+    if templates.empty:
+        st.warning("No templates yet — add one on the Templates page.")
     else:
-        if not drafting.api_key_available():
-            st.error(
-                "ANTHROPIC_API_KEY isn't set, so this mode can't call the Claude API. "
-                "Set it as an environment variable (never hard-coded) to use it:\n\n"
-                "`export ANTHROPIC_API_KEY=sk-ant-...`"
-            )
-        else:
-            st.caption(
-                "Claude will search the web for real public info about this company, weigh it "
-                "against MFBC's own outreach history, and draft an email explaining specifically "
-                "why they'd want to be part of MFBC — not a generic template. This can take a "
-                "minute or so since it's doing real research; it won't stop early with a "
-                "half-finished draft."
-            )
-            extra_info = st.text_area(
-                "Anything else you already know about them? (optional — Claude researches the "
-                "rest itself)",
-                key="extra_public_info",
-            )
-            if st.button("Research & draft with AI", type="primary"):
-                with st.spinner("Researching the company and drafting — this can take a minute..."):
-                    try:
-                        result = drafting.research_and_draft(brand_info, df, extra_info)
-                        st.session_state["ai_draft_result"] = result
-                        st.session_state["ai_draft_version"] = st.session_state.get("ai_draft_version", 0) + 1
-                    except Exception as exc:
-                        st.error(f"Couldn't generate a draft: {exc}")
+        t_options = {row.name: row for row in templates.itertuples()}
+        t_choice = st.selectbox("Template", list(t_options.keys()))
+        template_row = t_options[t_choice]
+        st.caption(
+            "No API call, nothing spent. Edit the [Templates](/Templates) page to "
+            "change the wording, then click below to (re)fill it with this brand's info."
+        )
+        if st.button("Fill in template", disabled=not brand_info):
+            rendered = db.render_template(template_row.body, brand_info)
+            st.session_state["free_draft_text"] = rendered
+            st.session_state["free_draft_version"] = st.session_state.get("free_draft_version", 0) + 1
 
-            result = st.session_state.get("ai_draft_result")
-            if result:
-                if result.get("chance_label"):
-                    c1, c2 = st.columns([1, 3])
-                    c1.metric("Researched reply chance", result["chance_label"])
-                    c2.caption(result["chance_reasoning"])
-                elif result.get("chance_reasoning"):
-                    st.caption(result["chance_reasoning"])
+        if "free_draft_text" in st.session_state:
+            edited_draft = st.text_area(
+                "Draft email", value=st.session_state["free_draft_text"], height=280,
+                key=f"free_draft_box_{st.session_state.get('free_draft_version', 0)}",
+            )
+else:
+    if not drafting.api_key_available():
+        st.error(
+            "ANTHROPIC_API_KEY isn't set, so this mode can't call the Claude API. "
+            "Set it as an environment variable (never hard-coded) to use it:\n\n"
+            "`export ANTHROPIC_API_KEY=sk-ant-...`"
+        )
+    else:
+        st.caption(
+            "Claude will search the web for real public info about this company, weigh it "
+            "against MFBC's own outreach history, and draft an email explaining specifically "
+            "why they'd want to be part of MFBC — not a generic template. This can take a "
+            "minute or so since it's doing real research; it won't stop early with a "
+            "half-finished draft."
+        )
+        extra_info = st.text_area(
+            "Anything else you already know about them? (optional — Claude researches the "
+            "rest itself)",
+            key="extra_public_info",
+        )
+        if st.button("Research & draft with AI", type="primary", disabled=not brand_info):
+            with st.spinner("Researching the company and drafting — this can take a minute..."):
+                try:
+                    result = drafting.research_and_draft(brand_info, df, extra_info)
+                    st.session_state["ai_draft_result"] = result
+                    st.session_state["ai_draft_version"] = st.session_state.get("ai_draft_version", 0) + 1
+                except Exception as exc:
+                    st.error(f"Couldn't generate a draft: {exc}")
 
-                edited_draft = st.text_area(
-                    "Draft email", value=result["draft"], height=280,
-                    key=f"ai_draft_text_{st.session_state.get('ai_draft_version', 0)}",
-                )
-                relied_on = result["relied_on"]
+        result = st.session_state.get("ai_draft_result")
+        if result:
+            if result.get("chance_label"):
+                c1, c2 = st.columns([1, 3])
+                c1.metric("Researched reply chance", result["chance_label"])
+                c2.caption(result["chance_reasoning"])
+            elif result.get("chance_reasoning"):
+                st.caption(result["chance_reasoning"])
 
+            edited_draft = st.text_area(
+                "Draft email", value=result["draft"], height=280,
+                key=f"ai_draft_text_{st.session_state.get('ai_draft_version', 0)}",
+            )
+            relied_on = result["relied_on"]
+
+if brand_info:
     def _save_record(extra_fields=None):
         """Insert or update this brand's row, carrying the draft text and any
         AI research along with it. For a manually-entered brand, remembers
