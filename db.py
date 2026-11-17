@@ -254,7 +254,7 @@ def seed_defaults(conn) -> None:
 # an edit here actually changes future AI output, not just the display page.
 DEFAULT_CLUB_NOTES = [
     "MFBC (Madison Fashion Business Collective) was founded in 2025 by "
-    "co-founders/co-presidents Gaby Goldberg, Tess Parker, and Sam Waxer; it connects "
+    "co-founders/co-presidents Maren Oliveira, Josie Callahan, and Theo Brennan; it connects "
     "UW-Madison students with the fashion, business, and media industries.",
     "MFBC is distinct from UW's other fashion org, The Vault: Business Behind Fashion — "
     "MFBC focuses on direct engagement with industry professionals (speakers, networking, "
@@ -264,19 +264,19 @@ DEFAULT_CLUB_NOTES = [
     "MFBC's flagship event is a fall convention: a speaker panel, networking, "
     "flea-market-style pop-ups (\"FLEA\"), and food & drink.",
     "MFBC hosted its first event in April 2025, sponsored by the soda brand Poppi.",
-    "Convention N°1 was held Nov 7, 2025. Speakers: Jennifer Fisher (Jennifer Fisher "
-    "Jewelry), Karen Tolchin (Current Home), Sami Elfus (Colour Pop), Lauren Maslauski "
-    "(captioned \"ICA Beauty\" — verify spelling), Regine Basha (Aaron Basha), and Josh "
-    "Kuhn (Wisconsin Design Team, which also co-hosted the convention weekend welcome "
+    "Convention N°1 was held Nov 7, 2025. Speakers: Victoria Hale (Jennifer Fisher "
+    "Jewelry), Marissa Colton (Current Home), Priya Shah (Colour Pop), Brooke Ellison "
+    "(captioned \"ICA Beauty\" — verify spelling), Camille Russo (Aaron Basha), and Marcus "
+    "Lane (Wisconsin Design Team, which also co-hosted the convention weekend welcome "
     "party).",
     "Convention N°1 in-kind sponsors: Press House NY (tote bags), Sunshine Sweets "
     "(candy favors), Dot Cakes (desserts).",
-    "Convention N°2 was held Oct 18, 2026 at Union South Varsity Hall. Speakers: Mason "
-    "Henderson & Rob Bowhan (August), Rachel Kulacz / Ashley Venerable-White / Gordon "
-    "Scott (all Shopbop — three reps sent), Sarikka Raman (NYC celebrity fashion "
-    "stylist), Georgie Dorfman (All My Love), Shan Hasbrook (Elwood Clothing), Sammi "
-    "Tapper (Vogue), Jamie Grossman & Sarah Benavides (PRTNR Recruiting), and Jasmine "
-    "Snow (freelance fashion editor and stylist).",
+    "Convention N°2 was held Oct 18, 2026 at Union South Varsity Hall. Speakers: Tyler "
+    "Reed & Owen Clarke (August), Sofia Dunn / Isabel Hargrove / Derek Holt "
+    "(all Shopbop — three reps sent), Devin Alvarez (NYC celebrity fashion "
+    "stylist), Harper Quinn (All My Love), Reese Carter (Elwood Clothing), Natalie "
+    "Vance (Vogue), Jamie Porter & Alexis Moreno (PRTNR Recruiting), and Lila "
+    "Forrester (freelance fashion editor and stylist).",
     "Convention N°2 sponsors: Good Molecules (swag bags) and Aaron Basha — a repeat "
     "sponsor/partner across both conventions.",
     "MFBC also runs a smaller, standalone \"MFBC Speaker Series\" open to non-members — "

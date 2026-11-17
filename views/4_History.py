@@ -63,7 +63,7 @@ def _render_brand_detail(row):
         st.caption("No message drafted or sent for this one yet.")
 
     st.subheader("AI research behind it")
-    if row.get("ai_chance_label") or row.get("ai_chance_reasoning"):
+    if row.get("ai_chance_label") or row.get("ai_chance_reasoning") or row.get("ai_relied_on"):
         if row.get("ai_chance_label"):
             rc1, rc2 = st.columns([1, 3])
             rc1.metric("Researched reply chance", row["ai_chance_label"])
@@ -71,8 +71,7 @@ def _render_brand_detail(row):
         elif row.get("ai_chance_reasoning"):
             st.caption(row["ai_chance_reasoning"])
         if row.get("ai_relied_on"):
-            with st.expander("What this draft relied on", expanded=True):
-                st.write(row["ai_relied_on"])
+            st.write(row["ai_relied_on"])
     else:
         st.caption(
             "No AI research saved for this one — it was drafted with the free template, "

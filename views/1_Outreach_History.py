@@ -109,6 +109,13 @@ def _brand_table(stage_df, key_prefix):
     view_df.insert(0, "history", "/history?brand_id=" + stage_df["id"].astype(int).astype(str))
     view_df["date_sent"] = view_df["date_sent"].apply(_to_date)
     view_df["stage"] = view_df["stage"].map(db.STAGE_LABELS)
+    def _preview(text, limit=60):
+        if not isinstance(text, str) or not text:
+            return None
+        return text[:limit].rstrip() + "…" if len(text) > limit else text
+
+    view_df["email_draft"] = stage_df["email_text"].apply(_preview)
+    view_df["ai_research"] = stage_df["ai_relied_on"].apply(_preview)
 
     st.dataframe(
         view_df,
@@ -118,7 +125,13 @@ def _brand_table(stage_df, key_prefix):
         height=40 + 35 * max(len(view_df), 1),
         column_config={
             "history": st.column_config.LinkColumn(
-                " ", display_text="🕒", width="small", help="Open this brand's write-up on Brand History",
+                "History", display_text="🕒", width="small", help="Open this brand's write-up on Brand History",
+            ),
+            "email_draft": st.column_config.TextColumn(
+                "Email Draft", width="medium", help="Preview of the drafted/sent email — open History for the full text",
+            ),
+            "ai_research": st.column_config.TextColumn(
+                "AI Research", width="medium", help="Preview of the AI-researched background behind this row — open History for the full text",
             ),
             "date_sent": st.column_config.DateColumn("Date sent"),
         },
@@ -145,12 +158,13 @@ EDIT_COLUMN_CONFIG = {
 
 
 def _inline_stage_editor(df, stage, key_prefix):
-    """A spreadsheet-style editor scoped to one stage's rows, so editing a
-    brand doesn't require leaving the tab it's already shown in."""
+    """A spreadsheet-style editor scoped to one stage's rows (or every row,
+    when stage is None), so editing a brand doesn't require leaving the tab
+    it's already shown in."""
     editor_key = f"{key_prefix}_inline_editor"
     delete_key = f"{key_prefix}_pending_deletes"
 
-    stage_df = df[df["stage"] == stage].copy()
+    stage_df = df.copy() if stage is None else df[df["stage"] == stage].copy()
     display_df = stage_df.copy()
     display_df["date_sent"] = display_df["date_sent"].apply(_to_date)
     display_df["reply_date"] = display_df["reply_date"].apply(_to_date)
@@ -224,7 +238,7 @@ def _inline_stage_editor(df, stage, key_prefix):
             record[flag] = int(bool(record.get(flag)))
         record.setdefault("ask_type", "other")
         record.setdefault("outcome", "no_reply")
-        record["stage"] = new_row.get("stage") or stage
+        record["stage"] = new_row.get("stage") or stage or "new"
         db.insert_record(record)
         changed = True
 
@@ -261,14 +275,13 @@ def _edit_toggle(df, stage, key_prefix):
 # ---------------------------------------------------------------------------
 
 with tab_all:
-    st.caption(
-        f"{len(df)} brand(s)/people total. Click a column header to sort, or a row's clock "
-        "icon for that brand's full write-up on Brand History (top menu)."
-    )
-    if df.empty:
-        st.info("Nothing logged yet.")
-    else:
-        _brand_table(df, "all")
+    st.caption(f"{len(df)} brand(s)/people total.")
+    editing = _edit_toggle(df, None, "all")
+    if not editing:
+        if df.empty:
+            st.info("Nothing logged yet.")
+        else:
+            _brand_table(df, "all")
 
 with tab_new:
     new_df = df[df["stage"] == "new"].copy()

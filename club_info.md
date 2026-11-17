@@ -15,8 +15,8 @@ change.
 ## What MFBC is
 
 The Madison Fashion Business Collective (MFBC) is a UW-Madison student
-organization founded in 2025 by co-founders/co-presidents Gaby Goldberg,
-Tess Parker, and Sam Waxer. It connects UW-Madison students with the
+organization founded in 2025 by co-founders/co-presidents Maren Oliveira,
+Josie Callahan, and Theo Brennan. It connects UW-Madison students with the
 fashion, business, and media industries beyond campus.
 
 MFBC is distinct from UW's other fashion org, The Vault: Business Behind
