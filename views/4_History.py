@@ -43,49 +43,76 @@ def _to_date(value):
         return None
 
 
+def _s(v):
+    """Coerce any value to a safe string-or-None: treats pandas/NumPy NaN the
+    same as None so `or` / `if` checks never see a truthy-but-unusable float,
+    no matter what the environment's pandas version hands back for a NULL
+    cell. Every field read in this function goes through this."""
+    if v is None:
+        return None
+    if isinstance(v, float) and v != v:
+        return None
+    return v
+
+
 def _render_brand_detail(row):
     """Everything known about one brand: stage/outcome, the saved message, the AI
     research behind it, notes, their response, and follow-up drafting."""
-    st.subheader(row["company"] or "(no company name)")
+    company = _s(row["company"])
+    stage = _s(row["stage"])
+    date_sent = _s(row["date_sent"])
+    outcome = _s(row["outcome"])
+    sender = _s(row["sender"])
+    contact_name = _s(row["contact_name"])
+    contact_role = _s(row["contact_role"])
+    ask_type = _s(row["ask_type"])
+    email_text = _s(row["email_text"])
+    ai_chance_label = _s(row.get("ai_chance_label"))
+    ai_chance_reasoning = _s(row.get("ai_chance_reasoning"))
+    ai_relied_on = _s(row.get("ai_relied_on"))
+    notes = _s(row["notes"])
+    response_text = _s(row.get("response_text"))
+
+    st.subheader(company or "(no company name)")
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Stage", db.STAGE_LABELS.get(row["stage"], row["stage"]))
-    c2.metric("Date sent", row["date_sent"] or "—")
-    c3.metric("Outcome", db.OUTCOME_LABELS.get(row["outcome"], row["outcome"] or "—"))
-    c4.metric("Sender", row["sender"] or "—")
+    c1.metric("Stage", db.STAGE_LABELS.get(stage, stage))
+    c2.metric("Date sent", date_sent or "—")
+    c3.metric("Outcome", db.OUTCOME_LABELS.get(outcome, outcome or "—"))
+    c4.metric("Sender", sender or "—")
 
-    if row["contact_name"] or row["contact_role"]:
-        st.caption(f"Contact: {row['contact_name'] or '—'} ({row['contact_role'] or 'role unknown'})")
-    st.caption(f"Type of ask: {db.ASK_TYPE_LABELS.get(row['ask_type'], row['ask_type'] or '—')}")
+    if contact_name or contact_role:
+        st.caption(f"Contact: {contact_name or '—'} ({contact_role or 'role unknown'})")
+    st.caption(f"Type of ask: {db.ASK_TYPE_LABELS.get(ask_type, ask_type or '—')}")
 
     st.subheader("Saved message")
-    if row["email_text"]:
+    if email_text:
         st.text_area(
-            "Saved message", value=row["email_text"], height=280,
+            "Saved message", value=email_text, height=280,
             key=f"history_email_{row['id']}", label_visibility="collapsed", disabled=True,
         )
     else:
         st.caption("No message drafted or sent for this one yet.")
 
     st.subheader("AI research behind it")
-    if row.get("ai_chance_label") or row.get("ai_chance_reasoning") or row.get("ai_relied_on"):
-        if row.get("ai_chance_label"):
+    if ai_chance_label or ai_chance_reasoning or ai_relied_on:
+        if ai_chance_label:
             rc1, rc2 = st.columns([1, 3])
-            rc1.metric("Researched reply chance", row["ai_chance_label"])
-            rc2.caption(row.get("ai_chance_reasoning") or "")
-        elif row.get("ai_chance_reasoning"):
-            st.caption(row["ai_chance_reasoning"])
-        if row.get("ai_relied_on"):
-            st.write(row["ai_relied_on"])
+            rc1.metric("Researched reply chance", ai_chance_label)
+            rc2.caption(ai_chance_reasoning or "")
+        elif ai_chance_reasoning:
+            st.caption(ai_chance_reasoning)
+        if ai_relied_on:
+            st.write(ai_relied_on)
     else:
         st.caption(
             "No AI research saved for this one — it was drafted with the free template, "
             "hasn't been drafted yet, or was saved before this history feature existed."
         )
 
-    if row["notes"]:
+    if notes:
         st.subheader("Notes on this brand")
-        st.write(row["notes"])
+        st.write(notes)
 
     st.divider()
     show_response_key = f"show_response_{row['id']}"
@@ -94,12 +121,15 @@ def _render_brand_detail(row):
         if st.button("Input their response", key=f"toggle_response_{row['id']}"):
             st.session_state[show_response_key] = not st.session_state.get(show_response_key, False)
     with rc2:
-        has_response = bool((row.get("response_text") or "").strip())
-        has_saved_message = bool((row.get("email_text") or "").strip())
+        has_response = bool((response_text or "").strip())
+        has_saved_message = bool((email_text or "").strip())
         gen_caption = (
-            "drafts a response to what they said" if has_response
-            else "drafts a reminder/follow-up (no reply on file yet)" if has_saved_message
-            else "drafts a first outreach email — nothing's been sent yet"
+            "drafts a response to what they said, using the email already sent and what "
+            "MFBC knows" if has_response
+            else "drafts a reminder/follow-up (no reply on file yet), using the email already "
+            "sent and what MFBC knows" if has_saved_message
+            else "drafts a first outreach email using the AI research already on file — "
+            "nothing's been sent yet"
         )
         gen_label = "Generate another email" if has_saved_message else "Generate an email"
         if st.button(gen_label, type="primary", key=f"generate_email_{row['id']}"):
@@ -112,7 +142,7 @@ def _render_brand_detail(row):
                 with st.spinner("Drafting..."):
                     try:
                         if has_response:
-                            result = drafting.draft_followup(row.to_dict(), row["response_text"])
+                            result = drafting.draft_followup(row.to_dict(), response_text)
                         elif has_saved_message:
                             result = drafting.draft_reminder(row.to_dict())
                         else:
@@ -120,7 +150,7 @@ def _render_brand_detail(row):
                         st.session_state[f"followup_draft_{row['id']}"] = result["draft"]
                     except Exception as exc:
                         st.error(f"Couldn't draft an email: {exc}")
-        st.caption(f"Claude {gen_caption}, using the email already sent and what MFBC knows.")
+        st.caption(f"Claude {gen_caption}.")
 
     if st.session_state.get(show_response_key):
         st.subheader("Their response")
@@ -130,7 +160,7 @@ def _render_brand_detail(row):
         )
 
         response_value = st.text_area(
-            "Their response", value=row.get("response_text") or "",
+            "Their response", value=response_text or "",
             key=f"response_text_{row['id']}", height=150, label_visibility="collapsed",
         )
         reply_date_value = st.date_input(
