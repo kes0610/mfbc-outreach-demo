@@ -95,11 +95,14 @@ def _render_brand_detail(row):
             st.session_state[show_response_key] = not st.session_state.get(show_response_key, False)
     with rc2:
         has_response = bool((row.get("response_text") or "").strip())
+        has_saved_message = bool((row.get("email_text") or "").strip())
         gen_caption = (
             "drafts a response to what they said" if has_response
-            else "drafts a reminder/follow-up (no reply on file yet)"
+            else "drafts a reminder/follow-up (no reply on file yet)" if has_saved_message
+            else "drafts a first outreach email — nothing's been sent yet"
         )
-        if st.button("Generate another email", type="primary", key=f"generate_email_{row['id']}"):
+        gen_label = "Generate another email" if has_saved_message else "Generate an email"
+        if st.button(gen_label, type="primary", key=f"generate_email_{row['id']}"):
             if not drafting.api_key_available():
                 st.error(
                     "ANTHROPIC_API_KEY isn't set, so this can't call the Claude API. Set it "
@@ -110,8 +113,10 @@ def _render_brand_detail(row):
                     try:
                         if has_response:
                             result = drafting.draft_followup(row.to_dict(), row["response_text"])
-                        else:
+                        elif has_saved_message:
                             result = drafting.draft_reminder(row.to_dict())
+                        else:
+                            result = drafting.draft_initial(row.to_dict())
                         st.session_state[f"followup_draft_{row['id']}"] = result["draft"]
                     except Exception as exc:
                         st.error(f"Couldn't draft an email: {exc}")

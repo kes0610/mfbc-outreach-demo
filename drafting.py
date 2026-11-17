@@ -106,6 +106,56 @@ Rules:
 """
 
 
+SYSTEM_PROMPT_INITIAL = """You help MFBC (Madison Fashion Business Collective), a UW-Madison \
+student organization, write a first outreach email to a brand, company, or individual — no \
+email has been sent to them yet.
+
+You are given MFBC's background, the brand/contact's details, and what MFBC has researched or \
+knows about them. Write a warm, specific first outreach email explaining why MFBC is reaching \
+out to this brand/person specifically and what MFBC is asking for — not a generic "we'd love to \
+partner" line.
+
+Rules:
+- Never invent facts, numbers, or dates not given to you.
+- Professional but warm tone, a student club member reaching out for the first time.
+- Under ~175 words. No subject line unless asked.
+- Output ONLY the email body — no preamble, no section markers, no commentary.
+"""
+
+
+def draft_initial(record: dict) -> dict:
+    """One-shot first-outreach draft for a brand with no saved message yet — grounded in
+    whatever AI research/notes are already on file, no live web search."""
+    club_info = read_club_info()
+    brand_block = _brand_block(record)
+    relied_on = record.get("ai_relied_on") or "(none recorded)"
+    notes = record.get("notes") or "(none recorded)"
+
+    user_message = f"""MFBC CLUB BACKGROUND:
+{club_info}
+
+BRAND/CONTACT DETAILS:
+{brand_block}
+
+WHAT MFBC HAS RESEARCHED OR KNOWS ABOUT THEM:
+{relied_on}
+
+OTHER NOTES ON FILE:
+{notes}
+
+Write the first outreach email."""
+
+    client = anthropic.Anthropic()
+    message = client.messages.create(
+        model=MODEL,
+        max_tokens=512,
+        system=SYSTEM_PROMPT_INITIAL,
+        messages=[{"role": "user", "content": user_message}],
+    )
+    text = "".join(block.text for block in message.content if block.type == "text")
+    return {"draft": text.strip()}
+
+
 def draft_reminder(record: dict) -> dict:
     """One-shot reminder draft for a brand that hasn't replied yet — a polite nudge based on
     the original email and what MFBC knew, with no reply to respond to."""
