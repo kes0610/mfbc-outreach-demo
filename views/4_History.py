@@ -18,13 +18,18 @@ page_header(
 )
 
 SORT_OPTIONS = {
+    "Stage": ("stage", True),
     "Date sent (newest first)": ("_date", False),
     "Date sent (oldest first)": ("_date", True),
     "Company (A-Z)": ("company", True),
     "Company (Z-A)": ("company", False),
-    "Stage": ("stage", True),
     "Outcome": ("outcome", True),
 }
+
+# Business-meaningful order for "Sort by: Stage" — not alphabetical. In
+# communication and Attending lead since those are the most active/relevant
+# brands to check first; anything outside this list sorts after.
+STAGE_SORT_ORDER = ["in_communication", "attending", "future_participation", "new", "archived"]
 
 
 def _to_date(value):
@@ -202,7 +207,9 @@ else:
     with c1:
         search = st.text_input("Search by company name", key="history_search", placeholder="e.g. Shopbop")
     with c2:
-        sort_choice = st.selectbox("Sort by", list(SORT_OPTIONS.keys()), key="history_sort_by")
+        sort_choice = st.selectbox(
+            "Sort by", list(SORT_OPTIONS.keys()), index=0, key="history_sort_by",
+        )
     with c3:
         st.write("")
         st.write("")
@@ -223,6 +230,11 @@ else:
         list_df = list_df.sort_values(
             "company", ascending=ascending, na_position="last",
             key=lambda s: s.astype(str).str.lower(),
+        )
+    elif sort_col == "stage":
+        list_df = list_df.sort_values(
+            "stage", ascending=ascending, na_position="last",
+            key=lambda s: s.map(lambda v: STAGE_SORT_ORDER.index(v) if v in STAGE_SORT_ORDER else len(STAGE_SORT_ORDER)),
         )
     else:
         list_df = list_df.sort_values(sort_col, ascending=ascending, na_position="last")
