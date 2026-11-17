@@ -378,6 +378,11 @@ def maybe_daily_backup() -> None:
 def fetch_all() -> pd.DataFrame:
     with _connect() as conn:
         df = pd.read_sql_query(f"SELECT {', '.join(COLUMNS)} FROM outreach ORDER BY date_sent DESC, id DESC", conn)
+    # Normalize missing values to plain None everywhere. pandas can hand back
+    # NaN (a float) instead of None for a NULL cell depending on environment —
+    # NaN is truthy in Python, which silently breaks every `if x:` / `x or
+    # default` check downstream (shows up as a literal "nan" in the UI).
+    df = df.where(pd.notna(df), None)
     for col in ("is_follow_up", "has_uw_mfbc_connection", "has_prior_relationship"):
         df[col] = df[col].astype(bool)
     return df
